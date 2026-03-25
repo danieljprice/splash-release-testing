@@ -20,7 +20,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - name: checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -33,14 +33,6 @@ jobs:
         echo "version=${vernum/refs\/tags\//}" >> $GITHUB_ENV
         echo "repo=$(basename ${repo})" >> $GITHUB_ENV
         echo "tarfile=$(basename ${repo})-${vernum/refs\/tags\//}.tar.gz" >> $GITHUB_ENV
-
-#    - name: build tarball mac
-#      if: matrix.os == 'macos-latest'
-#      env:
-#          tarfile: ${{ steps.get_version.outputs.tarfile }}
-#          repo: ${{ steps.get_version.outputs.repo }}
-#      run: |
-#          tar cfz /tmp/$tarfile --exclude ".git*" -s "/./${repo}/" .
 
     - name: build tarball
       if: matrix.os == 'ubuntu-latest'
@@ -66,27 +58,12 @@ jobs:
           ./scripts/get_release_notes.pl > release-notes.md
 
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ env.version }}
-        release_name: ${{ env.version }}
         body_path: release-notes.md
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
+        files: ${{ env.tarfile }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ env.tarfile }}
-        asset_name: ${{ env.tarfile }}
-        asset_content_type: application/gzip
 
     - name: Set up Homebrew
       id: set-up-homebrew
@@ -107,3 +84,123 @@ jobs:
         --sha256=${{ env.sha }} \
         --url="https://github.com/${{ github.repository }}/releases/download/${{ env.version }}/${{ env.tarfile }}" \
         $brewtap/$formula
+
+  binaries:
+    needs: release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            suffix: linux-x86_64
+          - os: macos-13
+            suffix: macos-x86_64
+          - os: macos-latest
+            suffix: macos-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: fortran-lang/setup-fortran@v1
+      with:
+        compiler: gcc
+        version: 'latest'
+
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev zlib1g-dev libcurl4-openssl-dev libaec-dev
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install pkg-config cairo libx11 freetype hdf5 curl zlib libaec
+
+    - name: Build static cfitsio
+      run: |
+        curl -O https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-4.4.0.tar.gz
+        tar xzf cfitsio-4.4.0.tar.gz
+        cd cfitsio-4.4.0
+        ./configure --prefix=$HOME/local
+        make -j 4
+        make install
+        cd ..
+
+    - name: get a copy of giza
+      run: git clone https://github.com/danieljprice/giza
+
+    - name: compile splash (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes NOWARN=yes \
+        HDF5ROOT=$(brew --prefix hdf5) \
+        HDF5LIBS="$(brew --prefix hdf5)/lib/libhdf5.a $(brew --prefix libaec)/lib/libsz.a $(brew --prefix libaec)/lib/libaec.a -lz -lm" \
+        FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
+        FITS_DIR="$HOME/local" \
+        PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2)" \
+        PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
+
+    - name: compile splash (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes NOWARN=yes \
+        HDF5ROOT='/usr/'
+        HDF5LIBS="$(pkg-config --libs --static hdf5-serial)" \
+        HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
+        FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
+        FITS_DIR="$HOME/local" \
+        PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2)" \
+        PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
+
+    - name: Download linuxdeploy
+      if: runner.os == 'Linux'
+      run: |
+        wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+
+    - name: Create AppImage (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        mkdir -p AppDir/usr/bin
+        mkdir -p AppDir/usr/share/applications
+        mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+        
+        # Copy splash binary
+        cp splash AppDir/usr/bin/
+        
+        # Create a basic desktop file required by AppImage
+        cat << 'EOF' > AppDir/usr/share/applications/splash.desktop
+        [Desktop Entry]
+        Name=Splash
+        Exec=splash
+        Icon=splash
+        Type=Application
+        Categories=Science;
+        Terminal=true
+        EOF
+        
+        # Create a dummy icon
+        touch AppDir/usr/share/icons/hicolor/256x256/apps/splash.png
+        
+        # Run linuxdeploy to bundle libraries
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir -e AppDir/usr/bin/splash --output appimage
+        
+        # Put the AppImage in a tarball so it can extract as 'splash'
+        mkdir -p standalone
+        mv Splash-x86_64.AppImage standalone/splash
+        cd standalone
+        tar czf ../splash-linux-x86_64-standalone.tar.gz splash
+        cd ..
+
+    - name: Rename executable
+      run: mv splash splash-${{ matrix.suffix }}
+
+    - name: Upload binary
+      uses: softprops/action-gh-release@v2
+      with:
+        files: splash-${{ matrix.suffix }}*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
