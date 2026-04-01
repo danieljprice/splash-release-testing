@@ -71,7 +71,7 @@ jobs:
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            FITS_DIR="$HOME/local" \
            PGPLOTLIBS="../giza/lib/libgiza.a" \
-           PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath" \
+           PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
            otool -L bin/splash
         else
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
