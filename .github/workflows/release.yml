@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             suffix: linux-x86_64
           - os: macos-latest
             suffix: macos-arm64
@@ -74,13 +74,10 @@ jobs:
            PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
            otool -L bin/splash
         else
-           # Debian/Ubuntu .pc still uses -lhdf5 so the linker prefers libhdf5.so; use libhdf5.a explicitly
-           h5libdir=$(pkg-config --variable=libdir hdf5-serial)
-           h5l=$(pkg-config --libs-only-l --static hdf5-serial | sed 's/-lhdf5//g')
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
            HDF5ROOT='/usr/' \
-           HDF5LIBS="${h5libdir}/libhdf5.a ${h5l}" \
-           HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
+           HDF5LIBS="/usr/lib/libhdf5.a" \
+           HDF5INCLUDE="-I/usr/include/hdf5" \
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            FITS_DIR="$HOME/local" \
            PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
