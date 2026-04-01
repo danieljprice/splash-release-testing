@@ -79,7 +79,7 @@ jobs:
            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            FITS_DIR="$HOME/local" \
-           PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2)" \
+           PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
            PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
         fi
 
