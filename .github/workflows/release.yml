@@ -58,7 +58,7 @@ jobs:
       run: git clone https://github.com/danieljprice/giza
 
     - name: compile splash
-      run:|
+      run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
            echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes PREFIX=${{ env.PREFIX }} \
