@@ -57,10 +57,13 @@ jobs:
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
+    - name: Set PREFIX (macOS)
+      if: runner.os == 'macOS'
+      run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
+
     - name: compile splash
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
-           echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes PREFIX=${{ env.PREFIX }} \
            HDF5ROOT=$(brew --prefix hdf5) \
            HDF5LIBS="$(brew --prefix hdf5)/lib/libhdf5.a $(brew --prefix libaec)/lib/libsz.a $(brew --prefix libaec)/lib/libaec.a -lz -lm" \
