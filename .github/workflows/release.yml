@@ -74,9 +74,12 @@ jobs:
            PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
            otool -L bin/splash
         else
+           # Debian/Ubuntu .pc still uses -lhdf5 so the linker prefers libhdf5.so; use libhdf5.a explicitly
+           h5libdir=$(pkg-config --variable=libdir hdf5-serial)
+           h5l=$(pkg-config --libs-only-l --static hdf5-serial | sed 's/-lhdf5//g')
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
            HDF5ROOT='/usr/' \
-           HDF5LIBS="$(pkg-config --libs --static hdf5-serial)" \
+           HDF5LIBS="${h5libdir}/libhdf5.a ${h5l}" \
            HDF5INCLUDE="$(pkg-config --cflags hdf5-serial)" \
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            FITS_DIR="$HOME/local" \
@@ -123,7 +126,7 @@ jobs:
         # Put the AppImage in a tarball so it can extract as 'splash'
         mkdir -p standalone
         mv "splash-${{ matrix.suffix }}.AppImage" standalone/splash
-        tar czf splash-${{ matrix.suffix }}-appimage.tar.gz -C standalone splash
+        tar czf splash-${{ matrix.suffix }}-standalone.tar.gz -C standalone splash
         cd ..
 
     - name: Package standalone binary
@@ -137,7 +140,7 @@ jobs:
         name: splash-binary-${{ matrix.suffix }}
         path: |
           splash-${{ matrix.suffix }}.tar.gz
-          splash-${{ matrix.suffix }}-appimage.tar.gz
+          splash-${{ matrix.suffix }}-standalone.tar.gz
 
     - name: Upload binary artifact (macOS)
       if: runner.os == 'macOS'
