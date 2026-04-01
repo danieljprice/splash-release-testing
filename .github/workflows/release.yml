@@ -61,7 +61,7 @@ jobs:
       if: runner.os == 'macOS'
       run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
 
-    - name: compile splash
+    - name: compile splash binary
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes PREFIX=${{ env.PREFIX }} \
@@ -126,8 +126,8 @@ jobs:
     - name: Package standalone binary (macOS)
       if: runner.os == 'macOS'
       run: |
-        mv splash splash-${{ matrix.suffix }}
-        tar czf splash-${{ matrix.suffix }}-standalone.tar.gz splash-${{ matrix.suffix }}
+        mv bin/splash ./splash
+        tar czf splash-${{ matrix.suffix }}.tar.gz ./splash
 
     - name: Upload binary artifact
       uses: actions/upload-artifact@v4
