@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            suffix: linux-x86_64
+            suffix: x86_64
           - os: macos-latest
             suffix: macos-arm64
     runs-on: ${{ matrix.os }}
@@ -43,6 +43,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         brew install pkg-config cairo libx11 freetype hdf5 curl zlib libaec
+        brew install --cask xquartz
 
     - name: Build static cfitsio
       run: |
@@ -123,21 +124,28 @@ jobs:
         # Put the AppImage in a tarball so it can extract as 'splash'
         mkdir -p standalone
         mv "splash-${{ matrix.suffix }}.AppImage" standalone/splash
-        cd standalone
-        tar czf ../splash-${{ matrix.suffix }}-standalone.tar.gz splash
+        tar czf ../splash-${{ matrix.suffix }}-appimage.tar.gz -C standalone splash
         cd ..
 
-    - name: Package standalone binary (macOS)
-      if: runner.os == 'macOS'
+    - name: Package standalone binary
       run: |
-        mv bin/splash ./splash
-        tar czf splash-${{ matrix.suffix }}.tar.gz ./splash
+        tar czf splash-${{ matrix.suffix }}.tar.gz -C bin splash
 
-    - name: Upload binary artifact
+    - name: Upload binary artifact (Linux)
+      if: runner.os == 'Linux'
       uses: actions/upload-artifact@v4
       with:
         name: splash-binary-${{ matrix.suffix }}
-        path: splash-${{ matrix.suffix }}-standalone.tar.gz
+        path: |
+          splash-${{ matrix.suffix }}.tar.gz
+          splash-${{ matrix.suffix }}-appimage.tar.gz
+
+    - name: Upload binary artifact (macOS)
+      if: runner.os == 'macOS'
+      uses: actions/upload-artifact@v4
+      with:
+        name: splash-binary-${{ matrix.suffix }}
+        path: splash-${{ matrix.suffix }}.tar.gz
 
   binaries:
     needs: build-binaries
