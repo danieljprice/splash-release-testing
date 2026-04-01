@@ -42,7 +42,7 @@ jobs:
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
       run: |
-        brew install pkg-config cairo libx11 freetype hdf5 curl zlib libaec
+        brew install pkg-config hdf5 curl zlib libaec
         brew install --cask xquartz
 
     - name: Build static cfitsio
@@ -70,7 +70,7 @@ jobs:
            HDF5LIBS="$(brew --prefix hdf5)/lib/libhdf5.a $(brew --prefix libaec)/lib/libsz.a $(brew --prefix libaec)/lib/libaec.a -lz -lm" \
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            FITS_DIR="$HOME/local" \
-           PGPLOTLIBS="../giza/lib/libgiza.a" \
+           PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
            PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
            otool -L bin/splash
         else
