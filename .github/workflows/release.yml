@@ -57,7 +57,7 @@ jobs:
     - name: get a copy of giza
       run: git clone https://github.com/danieljprice/giza
 
-    - name: Set PREFIX (macOS)
+    - name: Set prefix (macOS)
       if: runner.os == 'macOS'
       run: echo "PREFIX=$(brew --prefix)" >> "$GITHUB_ENV"
 
@@ -115,12 +115,14 @@ jobs:
         # Create a dummy icon
         touch AppDir/usr/share/icons/hicolor/256x256/apps/splash.png
 
-        # Run linuxdeploy to bundle libraries
+        # Run linuxdeploy to bundle libraries (LDAI_OUTPUT fixes the AppImage name; default is Name+arch from .desktop)
+        export LDAI_OUTPUT="splash-${{ matrix.suffix }}.AppImage"
         ./linuxdeploy-x86_64.AppImage --appdir AppDir -e AppDir/usr/bin/splash --output appimage
+        ls -la *.AppImage
 
         # Put the AppImage in a tarball so it can extract as 'splash'
         mkdir -p standalone
-        mv splash-x86_64.AppImage standalone/splash
+        mv "splash-${{ matrix.suffix }}.AppImage" standalone/splash
         cd standalone
         tar czf ../splash-${{ matrix.suffix }}-standalone.tar.gz splash
         cd ..
