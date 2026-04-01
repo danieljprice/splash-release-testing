@@ -65,7 +65,7 @@ jobs:
     - name: compile splash binary
       run: |
         if [ "$RUNNER_OS" == "macOS" ]; then
-           make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes PREFIX=${{ env.PREFIX }} \
+           make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
            HDF5ROOT=$(brew --prefix hdf5) \
            HDF5LIBS="$(brew --prefix hdf5)/lib/libhdf5.a $(brew --prefix libaec)/lib/libsz.a $(brew --prefix libaec)/lib/libaec.a -lz -lm" \
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
