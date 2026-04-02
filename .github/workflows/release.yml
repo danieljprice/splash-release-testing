@@ -77,7 +77,7 @@ jobs:
            export libprefix=/usr/lib/x86_64-linux-gnu
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
            HDF5ROOT='/usr/' FITS_DIR="$HOME/local" \
-           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz $libprefix/libcurl.a $libprefix/libbrotlidec.a $libprefix/libbrotlienc.a" \
+           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz $libprefix/libcurl.a $libprefix/libbrotlidec.a $libprefix/libbrotlienc.a $libprefix/libbrotlicommon.a" \
            HDF5LIBS="$libprefix/hdf5/serial/libhdf5.a $libprefix/libsz.a $libprefix/libaec.a -ldl -lm -lpthread" \
            HDF5INCLUDE="-I/usr/include/hdf5/serial" \
            PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
