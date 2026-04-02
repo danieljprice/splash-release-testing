@@ -37,7 +37,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libcairo2-dev libhdf5-dev libcfitsio-dev zlib1g-dev libcurl4-openssl-dev libssl-dev libaec-dev
+        sudo apt-get install -y pkg-config libcairo2-dev libhdf5-dev libcfitsio-dev zlib1g-dev libcurl4-openssl-dev libssl-dev libbrotli-dev libaec-dev
 
     - name: Install dependencies (macOS)
       if: runner.os == 'macOS'
@@ -78,7 +78,7 @@ jobs:
            HDF5ROOT='/usr/' \
            HDF5LIBS="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a /usr/lib/x86_64-linux-gnu/libsz.a /usr/lib/x86_64-linux-gnu/libaec.a -ldl -lm -lpthread" \
            HDF5INCLUDE="-I/usr/include/hdf5/serial" \
-           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz /usr/lib/x86_64-linux-gnu/libcurl.a" \
+           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz /usr/lib/x86_64-linux-gnu/libcurl.a /usr/lib/x86_64-linux-gnu/libbrotlidec.a" \
            FITS_DIR="$HOME/local" \
            PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
            PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
