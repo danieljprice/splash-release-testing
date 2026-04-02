@@ -75,15 +75,15 @@ jobs:
            otool -L bin/splash
         else
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
-           HDF5ROOT='/usr/' \
-           HDF5LIBS="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a /usr/lib/x86_64-linux-gnu/libsz.a /usr/lib/x86_64-linux-gnu/libaec.a -ldl -lm -lpthread" \
-           HDF5INCLUDE="-I/usr/include/hdf5/serial" \
-           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz /usr/lib/x86_64-linux-gnu/libcurl.a /usr/lib/x86_64-linux-gnu/libbrotlidec.a" \
-           FITS_DIR="$HOME/local" \
+           HDF5ROOT='/usr/' FITS_DIR="$HOME/local" \
+           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
-           PIELDFLAGS="-pie -static-libgfortran -static-libgcc -static-libquadmath"
+           PIELDFLAGS="-pie -static"
            ldd bin/splash
         fi
+#           HDF5LIBS="/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.a /usr/lib/x86_64-linux-gnu/libsz.a /usr/lib/x86_64-linux-gnu/libaec.a -ldl -lm -lpthread" \
+#           HDF5INCLUDE="-I/usr/include/hdf5/serial" \
+#           FITSLIBS="$HOME/local/lib/libcfitsio.a -lz /usr/lib/x86_64-linux-gnu/libcurl.a /usr/lib/x86_64-linux-gnu/libbrotlidec.a" \
 
     - name: Download linuxdeploy
       if: runner.os == 'Linux'
