@@ -76,7 +76,7 @@ jobs:
         else
            make -j 4 SYSTEM=gfortran CC=${{ env.CC }} withgiza HDF5=yes FITS=yes \
            HDF5ROOT='/usr/' FITS_DIR="$HOME/local" \
-           HDF5INCLUDE="-I/usr/include/hdf5/serial" HDF5LIBS="-lhdf5"\
+           HDF5INCLUDE="-I/usr/include/hdf5/serial" HDF5LIBS="-L/usr/lib/x86_64-linux-gnu/hdf5/serial -lhdf5"\
            FITSLIBS="$HOME/local/lib/libcfitsio.a -lz -lcurl -lm" \
            PGPLOTLIBS="../giza/lib/libgiza.a $(pkg-config --libs cairo fontconfig freetype2 x11)" \
            PIELDFLAGS="-pie -static"
